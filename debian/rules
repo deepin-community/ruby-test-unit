@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+export GEM2DEB_TEST_RUNNER = --check-dependencies
+export DH_RUBY = --gem-install
+
+%:
+	dh $@ --buildsystem=ruby --with ruby
+
+# * moving out of the way test/run-test, the role of which is
+#   played by debian/ruby-tests.rb
+# * not shipping bin/testrb
+override_dh_auto_install:
+	mv test/run-test.rb test/run-test.rb.disable
+	dh_auto_install
+	mv test/run-test.rb.disable test/run-test.rb
+	
+
+override_dh_installchangelogs:
+	dh_installchangelogs doc/text/news.md
+
+override_dh_builddeb:
+	if grep '^Depends:.*ruby\s' debian/ruby-test-unit/DEBIAN/control; then echo "E: ruby-test-unit should not depend on ruby, since ruby already depends on ruby-test-unit"; false; fi
+	dh_builddeb
